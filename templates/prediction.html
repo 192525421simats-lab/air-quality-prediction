@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 3: Machine Learning AQI Prediction | Air Quality Analytics</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <span class="logo-icon">🌿</span>
+                <span class="logo-text">AirQuality Analytics</span>
+            </div>
+            <nav class="nav-links">
+                <a href="{{ url_for('home') }}" class="nav-link">Home</a>
+                <a href="{{ url_for('data_collection') }}" class="nav-link">Pollution Data</a>
+                <a href="{{ url_for('analysis') }}" class="nav-link">Air Quality Analysis</a>
+                <a href="{{ url_for('prediction') }}" class="nav-link active">AQI Prediction</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Flash Alerts -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="alert-container">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            <span>{% if category == 'success' %}✓{% elif category == 'danger' %}⚠️{% else %}ℹ️{% endif %}</span>
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Page Header -->
+        <div class="section-header">
+            <div>
+                <div class="badge" style="background: rgba(56, 189, 248, 0.12); border-color: rgba(56, 189, 248, 0.3); color: #38bdf8;">
+                    MODULE 3: AQI PREDICTION
+                </div>
+                <h1 class="section-title">AQI Prediction & Predictive Intelligence</h1>
+                <p class="section-subtitle">
+                    Forecast Air Quality Index in real-time using trained Random Forest regression models on MySQL environmental records.
+                </p>
+            </div>
+            <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <span class="record-counter">Dataset: {{ model_info.records_count }} Records</span>
+            </div>
+        </div>
+
+        <!-- Model Diagnostics HUD Card -->
+        <section class="model-hud-card">
+            <div class="model-hud-header">
+                <div class="model-hud-title">
+                    <span>🧠</span>
+                    <span>Machine Learning Model Diagnostics</span>
+                </div>
+                <div>
+                    {% if model_info.is_trained %}
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: #34d399;">
+                            ● ML Model Active & Trained
+                        </span>
+                    {% else %}
+                        <span class="badge" style="background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.4); color: #fbbf24;">
+                            ● Fallback Engine Active ({{ model_info.records_count }} Records)
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Model Performance Metrics Row -->
+            <div class="model-metrics-row">
+                <div class="model-metric-box">
+                    <div class="model-metric-label">Algorithm</div>
+                    <div class="model-metric-val" style="font-size: 1rem; font-weight: 600; color: #ffffff;">
+                        Random Forest
+                    </div>
+                </div>
+                <div class="model-metric-box">
+                    <div class="model-metric-label">Training Records</div>
+                    <div class="model-metric-val">
+                        {{ model_info.records_count }}
+                    </div>
+                </div>
+                <div class="model-metric-box">
+                    <div class="model-metric-label">Model Accuracy (R²)</div>
+                    <div class="model-metric-val green">
+                        {{ "%.2f"|format(model_info.r2_score * 100) }}%
+                    </div>
+                </div>
+                <div class="model-metric-box">
+                    <div class="model-metric-label">Mean Abs Error (MAE)</div>
+                    <div class="model-metric-val purple">
+                        ±{{ model_info.mae }}
+                    </div>
+                </div>
+                <div class="model-metric-box">
+                    <div class="model-metric-label">RMSE</div>
+                    <div class="model-metric-val">
+                        {{ model_info.rmse }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feature Importance Breakdown -->
+            {% if model_info.feature_importances %}
+            <div class="feature-importance-section">
+                <div class="feature-importance-title">Feature Relative Importance (Contribution to AQI Forecast)</div>
+                <div class="feature-bars-grid">
+                    {% for feat_name, feat_pct in model_info.feature_importances.items() %}
+                    <div class="feature-bar-item">
+                        <div class="feature-bar-label">
+                            <span>{{ feat_name }}</span>
+                            <span><strong>{{ feat_pct }}%</strong></span>
+                        </div>
+                        <div class="feature-progress-track">
+                            <div class="feature-progress-fill" style="width: {{ feat_pct }}%;"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- Prediction Grid Layout (Form on left, Result on right) -->
+        <div class="prediction-grid-layout">
+            <!-- Left Column: Input Form -->
+            <div class="section-card">
+                <!-- Preset Sample Chips -->
+                <div class="presets-card">
+                    <div class="presets-header">
+                        <span>⚡</span>
+                        <span>Quick Fill Scenario Presets</span>
+                    </div>
+                    <div class="presets-list">
+                        <button type="button" class="preset-btn" onclick="fillPreset('clean')">
+                            🌱 Clean Air / Coastal
+                        </button>
+                        <button type="button" class="preset-btn" onclick="fillPreset('moderate')">
+                            🌤️ Moderate Urban
+                        </button>
+                        <button type="button" class="preset-btn" onclick="fillPreset('poor')">
+                            🌫️ High Traffic / Poor
+                        </button>
+                        <button type="button" class="preset-btn" onclick="fillPreset('severe')">
+                            🚨 Industrial Smog / Severe
+                        </button>
+                    </div>
+                </div>
+
+                <form action="{{ url_for('prediction') }}" method="POST" class="data-form" id="predictionForm">
+                    <div class="form-section-title">1. Atmospheric Pollutant Concentrations</div>
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label for="pm25">PM2.5 (µg/m³) <span class="required">*</span></label>
+                            <input type="number" step="any" min="0" id="pm25" name="pm25" placeholder="e.g. 35.5" value="{{ form_data.pm25 }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="pm10">PM10 (µg/m³) <span class="required">*</span></label>
+                            <input type="number" step="any" min="0" id="pm10" name="pm10" placeholder="e.g. 75.0" value="{{ form_data.pm10 }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="no2">Nitrogen Dioxide NO₂ (µg/m³) <span class="required">*</span></label>
+                            <input type="number" step="any" min="0" id="no2" name="no2" placeholder="e.g. 28.0" value="{{ form_data.no2 }}" required>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label for="so2">Sulfur Dioxide SO₂ (µg/m³) <span class="required">*</span></label>
+                            <input type="number" step="any" min="0" id="so2" name="so2" placeholder="e.g. 14.5" value="{{ form_data.so2 }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="co">Carbon Monoxide CO (mg/m³) <span class="required">*</span></label>
+                            <input type="number" step="any" min="0" id="co" name="co" placeholder="e.g. 0.85" value="{{ form_data.co }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="o3">Ozone O₃ (µg/m³) <span class="required">*</span></label>
+                            <input type="number" step="any" min="0" id="o3" name="o3" placeholder="e.g. 42.0" value="{{ form_data.o3 }}" required>
+                        </div>
+                    </div>
+
+                    <div class="form-section-title">2. Meteorological Conditions (Optional)</div>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="temperature">Ambient Temperature (°C)</label>
+                            <input type="number" step="any" id="temperature" name="temperature" placeholder="e.g. 28.5" value="{{ form_data.temperature }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="humidity">Relative Humidity (%)</label>
+                            <input type="number" step="any" min="0" max="100" id="humidity" name="humidity" placeholder="e.g. 65.0" value="{{ form_data.humidity }}">
+                        </div>
+                    </div>
+
+                    <div class="form-actions" style="margin-top: 1rem;">
+                        <button type="submit" class="btn-primary" id="btnPredict" style="flex: 1;">
+                            <span>🔮</span> Predict Air Quality Index (AQI)
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="resetForm()">
+                            Reset Form
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Right Column: Result or Guidance Card -->
+            <div>
+                {% if prediction_result %}
+                <!-- Prediction Output Card -->
+                <div class="prediction-result-card">
+                    <div class="result-hero {{ prediction_result.css_class }}">
+                        <div class="result-badge {{ prediction_result.css_class }}">
+                            <span>{{ prediction_result.icon }}</span>
+                            <span>{{ prediction_result.category }} Air Quality</span>
+                        </div>
+                        <div class="predicted-aqi-number">
+                            {{ prediction_result.predicted_aqi }}
+                        </div>
+                        <div class="predicted-dominant-tag">
+                            Dominant Driver: <strong>{{ prediction_result.dominant_pollutant }}</strong>
+                        </div>
+                    </div>
+
+                    <!-- Health Advisory -->
+                    <div class="advisory-box">
+                        <div class="advisory-item">
+                            <span class="advisory-icon">🫁</span>
+                            <div>
+                                <strong style="color: #ffffff;">Health Impact:</strong>
+                                <span>{{ prediction_result.health_impact }}</span>
+                            </div>
+                        </div>
+                        <div class="advisory-item">
+                            <span class="advisory-icon">🛡️</span>
+                            <div>
+                                <strong style="color: #ffffff;">Recommended Actions:</strong>
+                                <span>{{ prediction_result.precautions }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Individual Sub-scores -->
+                    {% if prediction_result.sub_scores %}
+                    <div class="sub-scores-container">
+                        <div class="sub-scores-title">Individual Pollutant Sub-Index Scores</div>
+                        <div class="sub-scores-grid">
+                            {% for p_name, p_score in prediction_result.sub_scores.items() %}
+                            <div class="sub-score-item">
+                                <div class="sub-score-name">{{ p_name }}</div>
+                                <div class="sub-score-val">{{ p_score }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Explanation -->
+                    <p style="font-size: 0.88rem; color: #94a3b8; line-height: 1.5; border-left: 2px solid var(--accent-cyan); padding-left: 0.75rem;">
+                        {{ prediction_result.explanation }}
+                    </p>
+                </div>
+                {% else %}
+                <!-- Awaiting Input Guidance Card -->
+                <div class="section-card" style="text-align: center; padding: 3rem 2rem;">
+                    <div style="font-size: 3.5rem; margin-bottom: 1rem;">🎯</div>
+                    <h2 style="font-size: 1.35rem; font-weight: 700; color: #ffffff; margin-bottom: 0.75rem;">
+                        Ready for Prediction
+                    </h2>
+                    <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 1.75rem; line-height: 1.6;">
+                        Enter atmospheric pollutant values on the left or select a quick-fill scenario preset to compute the predicted AQI and view health advisories.
+                    </p>
+                    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--radius-md); padding: 1.25rem; text-align: left;">
+                        <div style="font-size: 0.82rem; font-weight: 600; color: #38bdf8; text-transform: uppercase; margin-bottom: 0.5rem;">
+                            How ML Prediction Works
+                        </div>
+                        <p style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.5;">
+                            The Random Forest model learns complex non-linear interactions across PM2.5, PM10, nitrogen/sulfur oxides, carbon monoxide, and ozone recorded in your MySQL database to forecast atmospheric health.
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Section: AQI Standard Categories Reference Table -->
+        <section class="section-card" style="margin-top: 2.5rem;">
+            <h2 class="sub-heading">
+                <span>📊</span> AQI Standard Classification Scale (CPCB / EPA Standards)
+            </h2>
+            <div class="aqi-legend-grid">
+                <div class="legend-item legend-good">
+                    <div class="legend-badge">🌱 Good (0 - 50)</div>
+                    <div class="legend-desc">Minimal impact. Air quality is satisfactory and poses negligible or no risk.</div>
+                </div>
+                <div class="legend-item legend-moderate">
+                    <div class="legend-badge">🌿 Satisfactory (51 - 100)</div>
+                    <div class="legend-desc">Minor breathing discomfort to sensitive individuals. Generally safe for outdoors.</div>
+                </div>
+                <div class="legend-item legend-moderate">
+                    <div class="legend-badge">🌤️ Moderate (101 - 200)</div>
+                    <div class="legend-desc">Discomfort to people with asthma and heart ailments, children, and elderly.</div>
+                </div>
+                <div class="legend-item legend-poor">
+                    <div class="legend-badge">🌫️ Poor (201 - 300)</div>
+                    <div class="legend-desc">Breathing discomfort on prolonged exposure. Limit prolonged outdoor exertion.</div>
+                </div>
+                <div class="legend-item legend-very-poor">
+                    <div class="legend-badge">⚠️ Very Poor (301 - 400)</div>
+                    <div class="legend-desc">Respiratory illness on prolonged exposure. Sensitive groups should stay indoors.</div>
+                </div>
+                <div class="legend-item legend-severe">
+                    <div class="legend-badge">🚨 Severe (401 - 500+)</div>
+                    <div class="legend-desc">Emergency condition. May cause respiratory issues even in healthy people.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Recent Prediction Logs in MySQL Database -->
+        {% if recent_predictions %}
+        <section class="section-card" style="margin-top: 2.5rem;">
+            <div class="section-header" style="border: none; margin-bottom: 1rem; padding-bottom: 0;">
+                <div>
+                    <h2 class="sub-heading" style="margin-bottom: 0.25rem;">
+                        <span>📜</span> Recent Predictions Log (Persisted in MySQL)
+                    </h2>
+                    <p class="section-subtitle">
+                        Historical ML inferences stored in the <code style="color: #38bdf8;">predictions</code> table.
+                    </p>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Time</th>
+                            <th>PM2.5</th>
+                            <th>PM10</th>
+                            <th>NO₂</th>
+                            <th>SO₂</th>
+                            <th>CO</th>
+                            <th>O₃</th>
+                            <th>Predicted AQI</th>
+                            <th>Category</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in recent_predictions %}
+                        <tr>
+                            <td class="id-col">#{{ p.id }}</td>
+                            <td>{{ p.created_at.strftime('%Y-%m-%d %H:%M') if p.created_at else 'Just now' }}</td>
+                            <td>{{ "%.1f"|format(p.pm25) if p.pm25 is not none else '-' }}</td>
+                            <td>{{ "%.1f"|format(p.pm10) if p.pm10 is not none else '-' }}</td>
+                            <td>{{ "%.1f"|format(p.no2) if p.no2 is not none else '-' }}</td>
+                            <td>{{ "%.1f"|format(p.so2) if p.so2 is not none else '-' }}</td>
+                            <td>{{ "%.2f"|format(p.co) if p.co is not none else '-' }}</td>
+                            <td>{{ "%.1f"|format(p.o3) if p.o3 is not none else '-' }}</td>
+                            <td><strong style="color: #38bdf8; font-size: 1rem;">{{ "%.1f"|format(p.predicted_aqi) if p.predicted_aqi is not none else '-' }}</strong></td>
+                            <td>
+                                <span class="table-cat-badge {{ p.category|replace(' ', '-') if p.category else 'Moderate' }}">
+                                    {{ p.category or 'Unknown' }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% endif %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>© 2026 Air Quality Prediction Using Environmental Data Analytics | Module 3: Machine Learning AQI Prediction</p>
+    </footer>
+
+    <!-- Client-side Quick Fill Script -->
+    <script>
+        function fillPreset(scenario) {
+            const presets = {
+                'clean': {
+                    pm25: 18.5,
+                    pm10: 38.0,
+                    no2: 15.0,
+                    so2: 8.5,
+                    co: 0.4,
+                    o3: 32.0,
+                    temp: 26.5,
+                    hum: 65.0
+                },
+                'moderate': {
+                    pm25: 48.0,
+                    pm10: 92.0,
+                    no2: 34.0,
+                    so2: 18.0,
+                    co: 0.95,
+                    o3: 45.0,
+                    temp: 29.0,
+                    hum: 58.0
+                },
+                'poor': {
+                    pm25: 85.0,
+                    pm10: 175.0,
+                    no2: 65.0,
+                    so2: 32.0,
+                    co: 1.85,
+                    o3: 72.0,
+                    temp: 32.0,
+                    hum: 45.0
+                },
+                'severe': {
+                    pm25: 280.0,
+                    pm10: 420.0,
+                    no2: 140.0,
+                    so2: 85.0,
+                    co: 4.5,
+                    o3: 110.0,
+                    temp: 22.0,
+                    hum: 82.0
+                }
+            };
+
+            const data = presets[scenario];
+            if (!data) return;
+
+            document.getElementById('pm25').value = data.pm25;
+            document.getElementById('pm10').value = data.pm10;
+            document.getElementById('no2').value = data.no2;
+            document.getElementById('so2').value = data.so2;
+            document.getElementById('co').value = data.co;
+            document.getElementById('o3').value = data.o3;
+            document.getElementById('temperature').value = data.temp;
+            document.getElementById('humidity').value = data.hum;
+        }
+
+        function resetForm() {
+            // 1. Immediately clear all input fields on client
+            const fieldIds = ['pm25', 'pm10', 'no2', 'so2', 'co', 'o3', 'temperature', 'humidity'];
+            fieldIds.forEach(function(id) {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.value = '';
+                }
+            });
+
+            // 2. Remove any displayed alert messages
+            const alertContainers = document.querySelectorAll('.alert-container, .alert');
+            alertContainers.forEach(function(el) {
+                el.remove();
+            });
+
+            // 3. Clear temporary prediction result card if present
+            const resultCard = document.querySelector('.prediction-result-card');
+            if (resultCard) {
+                resultCard.remove();
+            }
+
+            // 4. Cleanly navigate to GET /prediction to reset form state completely
+            window.location.href = "{{ url_for('prediction') }}";
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Quality Prediction Using Environmental Data Analytics</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <span class="logo-icon">🌿</span>
+                <span class="logo-text">AirQuality Analytics</span>
+            </div>
+            <nav class="nav-links">
+                <a href="{{ url_for('home') }}" class="nav-link active">Home</a>
+                <a href="{{ url_for('data_collection') }}" class="nav-link">Pollution Data</a>
+                <a href="{{ url_for('analysis') }}" class="nav-link">Air Quality Analysis</a>
+                <a href="{{ url_for('prediction') }}" class="nav-link">AQI Prediction</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <section class="hero-section">
+            <div class="hero-card">
+                <div class="badge">PYTHON CAPSTONE PROJECT</div>
+                <h1 class="project-title">Air Quality Prediction Using Environmental Data Analytics</h1>
+                <p class="project-subtitle">Environmental Data Analytics for Air Quality Monitoring and Prediction</p>
+                
+                <div class="hero-cta">
+                    <a href="{{ url_for('data_collection') }}" class="btn-primary">
+                        <span>Add Pollution Data →</span>
+                    </a>
+                    <a href="{{ url_for('analysis') }}" class="btn-secondary">
+                        <span>View Air Quality Analysis 📈</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Navigation Overview Cards -->
+            <div class="modules-grid">
+                <div class="module-card highlight-card">
+                    <div class="module-icon">💨</div>
+                    <h3>Module 1: Pollution Data Collection</h3>
+                    <p>Record, manage, and store atmospheric measurements directly into MySQL database schema.</p>
+                    <a href="{{ url_for('data_collection') }}" class="card-link">Open Collection Form →</a>
+                </div>
+
+                <div class="module-card highlight-card">
+                    <div class="module-icon">📈</div>
+                    <h3>Module 2: Air Quality Analysis</h3>
+                    <p>Statistical summaries, concentration trends, pollutant comparisons, and interactive Chart.js visualizations.</p>
+                    <a href="{{ url_for('analysis') }}" class="card-link">Explore Analytics →</a>
+                </div>
+
+                <div class="module-card highlight-card">
+                    <div class="module-icon">🔮</div>
+                    <h3>Module 3: AQI Prediction</h3>
+                    <p>Machine Learning and predictive regression algorithms to forecast Air Quality Index categories and advisories.</p>
+                    <a href="{{ url_for('prediction') }}" class="card-link">Launch AQI Prediction →</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>© 2026 Air Quality Prediction Using Environmental Data Analytics | Python Capstone Project</p>
+    </footer>
+</body>
+</html>

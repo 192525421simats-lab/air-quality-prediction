@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MySQL Connection Test - Air Quality Prediction</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <span class="logo-icon">🌿</span>
+                <span class="logo-text">AirQuality Analytics</span>
+            </div>
+            <nav class="nav-links">
+                <a href="{{ url_for('home') }}" class="nav-link">Home</a>
+                <a href="{{ url_for('data_collection') }}" class="nav-link">Pollution Data</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <section class="hero-section">
+            <div class="hero-card" style="max-width: 800px; margin: 0 auto; text-align: left;">
+                
+                {% if success %}
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                        <span style="font-size: 2.5rem;">✅</span>
+                        <div>
+                            <div class="badge" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: #10b981;">Database Online</div>
+                            <h1 style="font-size: 1.85rem; color: #10b981; margin: 0;">Database connection successful!</h1>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.5rem;">
+                        <h3 style="color: #ffffff; margin-bottom: 1rem; font-size: 1.1rem;">Connection Details</h3>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem;">
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+                                <td style="padding: 0.6rem 0; color: var(--text-secondary);">Database Name:</td>
+                                <td style="padding: 0.6rem 0; color: #38bdf8; font-weight: 600;">{{ database }}</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+                                <td style="padding: 0.6rem 0; color: var(--text-secondary);">Host / Port:</td>
+                                <td style="padding: 0.6rem 0; color: #f8fafc;">{{ host }}:{{ port }}</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+                                <td style="padding: 0.6rem 0; color: var(--text-secondary);">User:</td>
+                                <td style="padding: 0.6rem 0; color: #f8fafc;">{{ user }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.6rem 0; color: var(--text-secondary);">Initialized Tables:</td>
+                                <td style="padding: 0.6rem 0; color: #10b981; font-weight: 600;">
+                                    {% if tables %}
+                                        {{ tables|join(', ') }}
+                                    {% else %}
+                                        None detected
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 2rem;">
+                        <a href="{{ url_for('data_collection') }}" class="nav-link active" style="display: inline-block; padding: 0.75rem 2rem; border-radius: 8px;">Go to Pollution Data Collection →</a>
+                    </div>
+
+                {% else %}
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                        <span style="font-size: 2.5rem;">⚠️</span>
+                        <div>
+                            <div class="badge" style="background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: #ef4444;">Connection Action Required</div>
+                            <h1 style="font-size: 1.85rem; color: #ef4444; margin: 0;">Database connection failed!</h1>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.5rem;">
+                        <h3 style="color: #ffffff; margin-bottom: 0.75rem; font-size: 1.1rem;">Troubleshooting Instructions</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.95rem;">
+                            Please verify that your MySQL server is running and ensure your actual MySQL root password is saved in the <code>.env</code> file:
+                        </p>
+                        <div style="background: rgba(0,0,0,0.4); padding: 1rem; border-radius: 6px; font-family: monospace; font-size: 0.9rem; color: #38bdf8; margin-bottom: 1rem;">
+                            DB_HOST={{ host }}<br>
+                            DB_PORT={{ port }}<br>
+                            DB_USER={{ user }}<br>
+                            DB_PASSWORD=YOUR_MYSQL_PASSWORD<br>
+                            DB_NAME={{ database }}
+                        </div>
+                        <p style="color: #94a3b8; font-size: 0.85rem;">
+                            <strong>Error summary:</strong> {{ error_details }}
+                        </p>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 2rem;">
+                        <a href="{{ url_for('db_test') }}" class="nav-link active" style="display: inline-block; padding: 0.75rem 2rem; border-radius: 8px;">Retry Connection</a>
+                    </div>
+                {% endif %}
+
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>© 2026 Air Quality Prediction Using Environmental Data Analytics | Python Capstone Project</p>
+    </footer>
+</body>
+</html>

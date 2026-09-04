@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Quality Analysis - Environmental Analytics</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <span class="logo-icon">🌿</span>
+                <span class="logo-text">AirQuality Analytics</span>
+            </div>
+            <nav class="nav-links">
+                <a href="{{ url_for('home') }}" class="nav-link">Home</a>
+                <a href="{{ url_for('data_collection') }}" class="nav-link">Pollution Data</a>
+                <a href="{{ url_for('analysis') }}" class="nav-link active">Air Quality Analysis</a>
+                <a href="{{ url_for('prediction') }}" class="nav-link">AQI Prediction</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Page Header -->
+        <section class="section-card" style="margin-bottom: 2rem;">
+            <div class="section-header" style="margin-bottom: 0; padding-bottom: 0; border-bottom: none;">
+                <div>
+                    <span class="badge">Module 2</span>
+                    <h1 class="section-title">Air Quality & Environmental Analytics</h1>
+                    <p class="section-subtitle">Comprehensive statistical analysis, pollutant distributions, and temporal trends derived from MySQL records.</p>
+                </div>
+                <div style="display: flex; gap: 0.75rem; align-items: center;">
+                    <span class="record-counter">{{ records|length }} Total Observations</span>
+                    <a href="{{ url_for('data_collection') }}" class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.88rem;">+ Add More Data</a>
+                </div>
+            </div>
+        </section>
+
+        {% if records and records|length > 0 %}
+            <!-- Air Quality Overall Health Category Card -->
+            <section class="status-summary-card status-{{ aqi_status.category_class }}" style="margin-bottom: 2rem;">
+                <div class="status-content">
+                    <div class="status-icon-wrap">
+                        <span class="status-big-icon">{{ aqi_status.icon }}</span>
+                    </div>
+                    <div class="status-text-wrap">
+                        <div class="status-label">Overall Atmospheric Health Index</div>
+                        <h2 class="status-heading">{{ aqi_status.category_name }}</h2>
+                        <p class="status-desc">{{ aqi_status.description }}</p>
+                    </div>
+                </div>
+                <div class="status-metrics">
+                    <div class="metric-pill">
+                        <span class="pill-label">Dominant Pollutant</span>
+                        <span class="pill-val">{{ aqi_status.dominant_pollutant }}</span>
+                    </div>
+                    <div class="metric-pill">
+                        <span class="pill-label">Avg PM2.5</span>
+                        <span class="pill-val">{{ stats.avg_pm25 }} µg/m³</span>
+                    </div>
+                    <div class="metric-pill">
+                        <span class="pill-label">Avg PM10</span>
+                        <span class="pill-val">{{ stats.avg_pm10 }} µg/m³</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Key Statistical Summary Cards Grid -->
+            <h2 class="sub-heading">📊 Key Pollutant & Meteorological Statistics</h2>
+            <div class="stats-grid" style="margin-bottom: 2.5rem;">
+                <!-- PM2.5 Card -->
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-icon">🌫️</span>
+                        <span class="stat-title">PM2.5</span>
+                    </div>
+                    <div class="stat-main-val">{{ stats.avg_pm25 }} <span class="unit">µg/m³</span></div>
+                    <div class="stat-sub">Average Concentration</div>
+                    <div class="stat-range">
+                        <span>Min: <strong>{{ stats.min_pm25 }}</strong></span>
+                        <span>Max: <strong>{{ stats.max_pm25 }}</strong></span>
+                    </div>
+                </div>
+
+                <!-- PM10 Card -->
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-icon">💨</span>
+                        <span class="stat-title">PM10</span>
+                    </div>
+                    <div class="stat-main-val">{{ stats.avg_pm10 }} <span class="unit">µg/m³</span></div>
+                    <div class="stat-sub">Average Concentration</div>
+                    <div class="stat-range">
+                        <span>Min: <strong>{{ stats.min_pm10 }}</strong></span>
+                        <span>Max: <strong>{{ stats.max_pm10 }}</strong></span>
+                    </div>
+                </div>
+
+                <!-- NO2 Card -->
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-icon">🚗</span>
+                        <span class="stat-title">NO2</span>
+                    </div>
+                    <div class="stat-main-val">{{ stats.avg_no2 }} <span class="unit">µg/m³</span></div>
+                    <div class="stat-sub">Average Nitrogen Dioxide</div>
+                    <div class="stat-range">
+                        <span>Min: <strong>{{ stats.min_no2 }}</strong></span>
+                        <span>Max: <strong>{{ stats.max_no2 }}</strong></span>
+                    </div>
+                </div>
+
+                <!-- SO2 Card -->
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-icon">🏭</span>
+                        <span class="stat-title">SO2</span>
+                    </div>
+                    <div class="stat-main-val">{{ stats.avg_so2 }} <span class="unit">µg/m³</span></div>
+                    <div class="stat-sub">Average Sulfur Dioxide</div>
+                    <div class="stat-range">
+                        <span>Min: <strong>{{ stats.min_so2 }}</strong></span>
+                        <span>Max: <strong>{{ stats.max_so2 }}</strong></span>
+                    </div>
+                </div>
+
+                <!-- CO Card -->
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-icon">🔥</span>
+                        <span class="stat-title">CO</span>
+                    </div>
+                    <div class="stat-main-val">{{ stats.avg_co }} <span class="unit">mg/m³</span></div>
+                    <div class="stat-sub">Average Carbon Monoxide</div>
+                    <div class="stat-range">
+                        <span>Min: <strong>{{ stats.min_co }}</strong></span>
+                        <span>Max: <strong>{{ stats.max_co }}</strong></span>
+                    </div>
+                </div>
+
+                <!-- O3 Card -->
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-icon">☀️</span>
+                        <span class="stat-title">O3</span>
+                    </div>
+                    <div class="stat-main-val">{{ stats.avg_o3 }} <span class="unit">µg/m³</span></div>
+                    <div class="stat-sub">Average Ozone</div>
+                    <div class="stat-range">
+                        <span>Min: <strong>{{ stats.min_o3 }}</strong></span>
+                        <span>Max: <strong>{{ stats.max_o3 }}</strong></span>
+                    </div>
+                </div>
+
+                <!-- Temperature Card -->
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-icon">🌡️</span>
+                        <span class="stat-title">Temperature</span>
+                    </div>
+                    <div class="stat-main-val">{{ stats.avg_temp }} <span class="unit">°C</span></div>
+                    <div class="stat-sub">Average Ambient Temp</div>
+                    <div class="stat-range">
+                        <span>Min: <strong>{{ stats.min_temp }}°C</strong></span>
+                        <span>Max: <strong>{{ stats.max_temp }}°C</strong></span>
+                    </div>
+                </div>
+
+                <!-- Humidity Card -->
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span class="stat-icon">💧</span>
+                        <span class="stat-title">Humidity</span>
+                    </div>
+                    <div class="stat-main-val">{{ stats.avg_humidity }} <span class="unit">%</span></div>
+                    <div class="stat-sub">Average Relative Humidity</div>
+                    <div class="stat-range">
+                        <span>Min: <strong>{{ stats.min_humidity }}%</strong></span>
+                        <span>Max: <strong>{{ stats.max_humidity }}%</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visual Analytics Charts Grid -->
+            <h2 class="sub-heading">📈 Visual Data Analytics</h2>
+            <div class="charts-grid" style="margin-bottom: 2.5rem;">
+                
+                <!-- Chart 1: PM2.5 & PM10 Trend -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div>
+                            <h3 class="chart-title">PM2.5 & PM10 Trend Analysis</h3>
+                            <p class="chart-subtitle">Particulate matter fluctuations across time sequence.</p>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 2: Major Pollutants Comparison -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div>
+                            <h3 class="chart-title">Major Pollutants Comparison</h3>
+                            <p class="chart-subtitle">Average concentration levels across gaseous and particulate pollutants.</p>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="pollutantBarChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 3: Pollution by Monitoring Location -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div>
+                            <h3 class="chart-title">Pollution Levels by Location</h3>
+                            <p class="chart-subtitle">Spatial distribution of PM2.5 and PM10 across monitoring stations.</p>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="locationChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 4: Weather vs Particulates Correlation -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div>
+                            <h3 class="chart-title">Weather Parameters vs PM2.5</h3>
+                            <p class="chart-subtitle">Temperature & humidity relationship with PM2.5 particulate dispersion.</p>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="weatherCorrelationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Standard Category Breakpoints Guide -->
+            <div class="section-card" style="margin-bottom: 2.5rem;">
+                <h3 style="color: #ffffff; margin-bottom: 1rem; font-size: 1.2rem;">AQI Reference Scale & Pollution Categories</h3>
+                <div class="aqi-legend-grid">
+                    <div class="legend-item legend-good">
+                        <div class="legend-badge">Good (0 - 50)</div>
+                        <div class="legend-desc">Minimal impact, clean and breathable air.</div>
+                    </div>
+                    <div class="legend-item legend-moderate">
+                        <div class="legend-badge">Moderate (51 - 100)</div>
+                        <div class="legend-desc">Acceptable air quality; minor breathing discomfort to sensitive people.</div>
+                    </div>
+                    <div class="legend-item legend-poor">
+                        <div class="legend-badge">Poor (101 - 200)</div>
+                        <div class="legend-desc">Breathing discomfort to most people on prolonged exposure.</div>
+                    </div>
+                    <div class="legend-item legend-very-poor">
+                        <div class="legend-badge">Very Poor (201 - 300)</div>
+                        <div class="legend-desc">Respiratory illness on prolonged exposure.</div>
+                    </div>
+                    <div class="legend-item legend-severe">
+                        <div class="legend-badge">Severe (301+)</div>
+                        <div class="legend-desc">Affects healthy people and severely impacts those with existing conditions.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Data Table Section -->
+            <section class="section-card">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title" style="font-size: 1.4rem;">Historical Observations Dataset</h2>
+                        <p class="section-subtitle">Underlying database records used for analytical visualizations.</p>
+                    </div>
+                    <span class="record-counter">{{ records|length }} Records</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>#ID</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Location</th>
+                                <th>PM2.5</th>
+                                <th>PM10</th>
+                                <th>CO</th>
+                                <th>NO2</th>
+                                <th>SO2</th>
+                                <th>O3</th>
+                                <th>Temp (°C)</th>
+                                <th>Humidity (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in records %}
+                                <tr>
+                                    <td class="id-col">{{ r.id }}</td>
+                                    <td>{{ r.date.strftime('%Y-%m-%d') if r.date else '-' }}</td>
+                                    <td>{{ r.time.strftime('%H:%M:%S') if r.time else '-' }}</td>
+                                    <td class="location-col">{{ r.location or '-' }}</td>
+                                    <td>{{ "%.2f"|format(r.pm25) if r.pm25 is not none else '-' }}</td>
+                                    <td>{{ "%.2f"|format(r.pm10) if r.pm10 is not none else '-' }}</td>
+                                    <td>{{ "%.2f"|format(r.co) if r.co is not none else '-' }}</td>
+                                    <td>{{ "%.2f"|format(r.no2) if r.no2 is not none else '-' }}</td>
+                                    <td>{{ "%.2f"|format(r.so2) if r.so2 is not none else '-' }}</td>
+                                    <td>{{ "%.2f"|format(r.o3) if r.o3 is not none else '-' }}</td>
+                                    <td>{{ "%.1f"|format(r.temperature) if r.temperature is not none else '-' }}</td>
+                                    <td>{{ "%.1f"|format(r.humidity) if r.humidity is not none else '-' }}%</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        {% else %}
+            <!-- Empty State when no records exist -->
+            <div class="empty-state" style="padding: 4.5rem 2rem;">
+                <div class="empty-icon">📊</div>
+                <h2 class="empty-text">No Environmental Data Available for Analysis</h2>
+                <p class="empty-subtext" style="max-width: 500px; margin: 0 auto 1.5rem auto;">
+                    Please add pollution records through the Data Collection module to generate visual charts and statistical metrics.
+                </p>
+                <a href="{{ url_for('data_collection') }}" class="btn-primary">Go to Pollution Data Collection →</a>
+            </div>
+        {% endif %}
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>© 2026 Air Quality Prediction Using Environmental Data Analytics | Python Capstone Project</p>
+    </footer>
+
+    {% if records and records|length > 0 %}
+    <!-- Chart.js Visualization Scripts -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Chart Defaults
+            Chart.defaults.color = '#94a3b8';
+            Chart.defaults.font.family = "'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+            Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.08)';
+
+            // Data passed safely from Flask backend
+            const chartData = {{ chart_json|safe }};
+
+            // 1. PM2.5 & PM10 Trend Chart (Line)
+            const ctxTrend = document.getElementById('trendChart').getContext('2d');
+            new Chart(ctxTrend, {
+                type: 'line',
+                data: {
+                    labels: chartData.timeline_labels,
+                    datasets: [
+                        {
+                            label: 'PM2.5 (µg/m³)',
+                            data: chartData.pm25_series,
+                            borderColor: '#38bdf8',
+                            backgroundColor: 'rgba(56, 189, 248, 0.15)',
+                            fill: true,
+                            tension: 0.35,
+                            borderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: 'PM10 (µg/m³)',
+                            data: chartData.pm10_series,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            fill: true,
+                            tension: 0.35,
+                            borderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } },
+                        tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)', padding: 12, cornerRadius: 8 }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.05)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // 2. Major Pollutants Comparison Chart (Bar)
+            const ctxPollutant = document.getElementById('pollutantBarChart').getContext('2d');
+            new Chart(ctxPollutant, {
+                type: 'bar',
+                data: {
+                    labels: ['PM2.5', 'PM10', 'NO2', 'SO2', 'O3', 'CO (×10)'],
+                    datasets: [{
+                        label: 'Average Concentration',
+                        data: [
+                            chartData.avg_pm25,
+                            chartData.avg_pm10,
+                            chartData.avg_no2,
+                            chartData.avg_so2,
+                            chartData.avg_o3,
+                            chartData.avg_co * 10 // Scaled for visible comparison
+                        ],
+                        backgroundColor: [
+                            'rgba(56, 189, 248, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(239, 68, 68, 0.7)',
+                            'rgba(168, 85, 247, 0.7)',
+                            'rgba(236, 72, 153, 0.7)'
+                        ],
+                        borderColor: [
+                            '#38bdf8',
+                            '#10b981',
+                            '#f59e0b',
+                            '#ef4444',
+                            '#a855f7',
+                            '#ec4899'
+                        ],
+                        borderWidth: 1.5,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.dataIndex === 5) {
+                                        return `CO: ${chartData.avg_co} mg/m³ (scaled ×10 in chart)`;
+                                    }
+                                    return `${context.label}: ${context.raw} µg/m³`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.05)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // 3. Pollution by Location Chart (Horizontal / Grouped Bar)
+            const ctxLocation = document.getElementById('locationChart').getContext('2d');
+            new Chart(ctxLocation, {
+                type: 'bar',
+                data: {
+                    labels: chartData.location_labels,
+                    datasets: [
+                        {
+                            label: 'Avg PM2.5 (µg/m³)',
+                            data: chartData.location_pm25,
+                            backgroundColor: 'rgba(56, 189, 248, 0.75)',
+                            borderColor: '#38bdf8',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Avg PM10 (µg/m³)',
+                            data: chartData.location_pm10,
+                            backgroundColor: 'rgba(16, 185, 129, 0.75)',
+                            borderColor: '#10b981',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.05)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // 4. Weather Parameters vs PM2.5 (Dual-Axis Line/Bar Chart)
+            const ctxWeather = document.getElementById('weatherCorrelationChart').getContext('2d');
+            new Chart(ctxWeather, {
+                type: 'line',
+                data: {
+                    labels: chartData.timeline_labels,
+                    datasets: [
+                        {
+                            label: 'PM2.5 (µg/m³)',
+                            data: chartData.pm25_series,
+                            borderColor: '#38bdf8',
+                            backgroundColor: 'rgba(56, 189, 248, 0.2)',
+                            yAxisID: 'yPollution',
+                            tension: 0.3,
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Temperature (°C)',
+                            data: chartData.temp_series,
+                            borderColor: '#f59e0b',
+                            borderDash: [5, 5],
+                            yAxisID: 'yWeather',
+                            tension: 0.3,
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Humidity (%)',
+                            data: chartData.humidity_series,
+                            borderColor: '#06b6d4',
+                            borderDash: [3, 3],
+                            yAxisID: 'yWeather',
+                            tension: 0.3,
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } }
+                    },
+                    scales: {
+                        yPollution: {
+                            type: 'linear',
+                            position: 'left',
+                            title: { display: true, text: 'PM2.5 (µg/m³)', color: '#38bdf8' },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        },
+                        yWeather: {
+                            type: 'linear',
+                            position: 'right',
+                            title: { display: true, text: 'Temp (°C) / Humidity (%)', color: '#f59e0b' },
+                            grid: { display: false }
+                        },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        });
+    </script>
+    {% endif %}
+</body>
+</html>
