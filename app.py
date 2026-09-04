@@ -10,8 +10,7 @@ import pymysql
 # Explicitly load project .env file with override enabled
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DOTENV_PATH = os.path.join(BASE_DIR, '.env')
-load_dotenv(DOTENV_PATH, override=True)
-
+load_dotenv(DOTENV_PATH, override=False)
 # Import database instance and models
 from models import db, PollutionData, Prediction
 

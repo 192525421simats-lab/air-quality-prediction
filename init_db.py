@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 # Load .env explicitly with override=True
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DOTENV_PATH = os.path.join(BASE_DIR, '.env')
-load_dotenv(DOTENV_PATH, override=True)
+load_dotenv(DOTENV_PATH, override=False)
 
 from app import app, db
 from models import PollutionData, Prediction
